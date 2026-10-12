@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quizizz Sinh Học 10 - Axit Nucleic (20 Câu)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+    body {
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      color: #fff;
+    }
+    .bg-animated {
+      background: linear-gradient(-45deg, #1c053a, #0a0118, #3b0764, #140529);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .orb-1, .orb-2 {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      z-index: -1;
+      opacity: 0.45;
+      animation: floatOrb 12s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+    .orb-1 { width: 400px; height: 400px; background: #9333ea; top: -150px; left: -100px; }
+    .orb-2 { width: 350px; height: 350px; background: #ec4899; bottom: -100px; right: -50px; animation-delay: -6s; }
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 60px) scale(1.15); }
+    }
+
+    .quiz-card {
+      background: rgba(28, 10, 56, 0.75);
+      backdrop-filter: blur(14px);
+      border: 2px solid rgba(168, 85, 247, 0.3);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(147, 51, 234, 0.25);
+    }
+    .btn-quiz {
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    }
+    .btn-quiz:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+    }
+    .btn-quiz:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    .glow-correct {
+      background-color: #10b981 !important;
+      border-color: #059669 !important;
+      color: #ffffff !important;
+      animation: pulseGlow 0.5s ease-in-out;
+    }
+    .glow-wrong {
+      background-color: #ef4444 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+      animation: shake 0.4s ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .svg-container svg {
+      max-height: 120px;
+      width: auto;
+      margin: 0 auto;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+      transition: transform 0.3s ease;
+    }
+    .svg-container:hover svg {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen p-3 md:p-6 select-none bg-animated relative">
+
+  <div class="orb-1"></div>
+  <div class="orb-2"></div>
+
+  <!-- TOP HEADER -->
+  <header class="max-w-4xl w-full mx-auto mb-4 flex items-center justify-between bg-purple-950/70 p-3 rounded-2xl border border-purple-800/40 relative z-10">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center font-extrabold text-xl shadow-lg">
+        🧬
+      </div>
+      <div>
+        <h1 class="font-extrabold text-sm md:text-base tracking-wide text-purple-200">SINH HỌC 10 - NUCLEIC ACID</h1>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2 md:space-x-3 text-xs md:text-sm">
+      <button id="toggleSoundBtn" onclick="toggleSound()" class="px-2.5 py-1.5 rounded-lg bg-purple-900/80 hover:bg-purple-800 border border-purple-700/50 flex items-center gap-1.5 font-bold transition">
+        <span id="soundIcon">🔊</span> <span class="hidden sm:inline">Âm thanh</span>
+      </button>
+      <button id="toggleShuffleBtn" onclick="toggleShuffle()" class="px-2.5 py-1.5 rounded-lg bg-purple-900/80 hover:bg-purple-800 border border-purple-700/50 flex items-center gap-1.5 font-bold transition">
+        <span>🔀</span> <span class="hidden sm:inline" id="shuffleStatus">Xáo trộn: BẬT</span>
+      </button>
+      <div class="bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-lg font-black flex items-center gap-1">
+        🔥 <span id="scoreBadge">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-4xl w-full mx-auto flex-1 flex flex-col justify-center relative z-10">
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="quiz-card rounded-3xl p-6 md:p-10 text-center flex flex-col items-center">
+      <div class="inline-block p-4 rounded-3xl bg-purple-600/30 border border-purple-500/40 mb-3 animate-pulse">
+        🔬
+      </div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black uppercase tracking-wider mb-2 shadow-inner">
+        <span>⭐ ĐỀ THI 20 CÂU (TRẮC NGHIỆM, ĐÚNG/SAI, CHỌN ẢNH) ⭐</span>
+      </div>
+      <h2 class="text-2xl md:text-4xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 drop-shadow-md">
+        NUCLEIC ACID (DNA & RNA)
+      </h2>
+
+      <div class="grid grid-cols-2 gap-3 w-full max-w-sm mb-8 text-xs md:text-sm">
+        <div class="bg-purple-900/40 p-3 rounded-xl border border-purple-800/40">
+          <div class="text-purple-400 font-bold">Tổng số câu</div>
+          <div class="text-lg font-extrabold text-white">20 câu</div>
+        </div>
+        <div class="bg-purple-900/40 p-3 rounded-xl border border-purple-800/40">
+          <div class="text-amber-400 font-bold">Thông hiểu</div>
+          <div class="text-lg font-extrabold text-white">2 câu</div>
+        </div>
+      </div>
+
+      <button onclick="startQuiz()" class="btn-quiz w-full max-w-xs py-4 px-8 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-lg md:text-xl tracking-wider shadow-lg shadow-emerald-500/30">
+        BẮT ĐẦU THỬ THÁCH 🚀
+      </button>
+    </div>
+
+    <!-- QUIZ PLAY SCREEN -->
+    <div id="quizScreen" class="hidden flex-col">
+      <div class="flex items-center justify-between mb-2 text-xs md:text-sm font-bold text-purple-300">
+        <div class="flex items-center gap-2">
+          <span class="bg-purple-800/60 px-2.5 py-1 rounded-md" id="questionCounter">Câu 1/20</span>
+          <span class="px-2.5 py-1 rounded-md text-xs uppercase tracking-wider bg-purple-700 text-purple-100 font-extrabold" id="levelTag">Nhận biết</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="streakIndicator" class="text-amber-400">Chuỗi: 0 🔥</span>
+          <span id="timerIndicator" class="text-purple-200">⏱️ <span id="autoNextTimer">--</span></span>
+        </div>
+      </div>
+
+      <div class="w-full bg-purple-950/80 rounded-full h-2.5 mb-4 p-0.5 border border-purple-800/50 overflow-hidden">
+        <div id="progressBar" class="bg-gradient-to-r from-pink-500 to-emerald-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <!-- QUESTION CARD -->
+      <div class="quiz-card rounded-3xl p-5 md:p-8 flex flex-col justify-between min-h-[460px]">
+        <div>
+          <div id="illustrationBox" class="svg-container w-full bg-purple-950/60 border border-purple-800/50 rounded-2xl p-3 mb-3 flex items-center justify-center"></div>
+          <div id="questionTitle" class="text-base md:text-xl font-black text-white leading-snug mb-2">Đang tải câu hỏi...</div>
+        </div>
+
+        <div id="answerOptionsContainer" class="w-full"></div>
+
+        <div id="feedbackBanner" class="hidden mt-4 p-3.5 rounded-2xl text-xs md:text-sm font-medium border transition-all duration-200">
+          <div class="flex items-start gap-2">
+            <span id="feedbackIcon" class="text-lg">💡</span>
+            <div>
+              <div id="feedbackTitle" class="font-bold text-sm mb-0.5">Giải thích chi tiết:</div>
+              <div id="feedbackText" class="text-purple-100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY / RESULT SCREEN -->
+    <div id="resultScreen" class="hidden quiz-card rounded-3xl p-6 md:p-10 text-center flex-col items-center">
+      <div id="resultTrophy" class="text-6xl mb-3 animate-bounce">🏆</div>
+      <h2 class="text-2xl md:text-4xl font-black text-white mb-1 drop-shadow-md" id="resultTitle">HOÀN THÀNH XUẤT SẮC!</h2>
+      <p class="text-purple-300 text-sm md:text-base mb-6" id="resultSubtitle">Bạn đã hoàn thành bộ câu hỏi Nucleic Acid!</p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-8 text-center">
+        <div class="bg-purple-900/50 p-3 rounded-2xl border border-purple-700/40 shadow-inner">
+          <div class="text-xs text-purple-300 font-bold">Điểm số</div>
+          <div class="text-2xl font-black text-amber-400" id="finalScore">0</div>
+        </div>
+        <div class="bg-purple-900/50 p-3 rounded-2xl border border-purple-700/40 shadow-inner">
+          <div class="text-xs text-purple-300 font-bold">Độ chính xác</div>
+          <div class="text-2xl font-black text-emerald-400" id="finalAccuracy">0%</div>
+        </div>
+        <div class="bg-purple-900/50 p-3 rounded-2xl border border-purple-700/40 shadow-inner">
+          <div class="text-xs text-purple-300 font-bold">Số câu đúng</div>
+          <div class="text-2xl font-black text-teal-300" id="finalCorrectCount">0/20</div>
+        </div>
+        <div class="bg-purple-900/50 p-3 rounded-2xl border border-purple-700/40 shadow-inner">
+          <div class="text-xs text-purple-300 font-bold">Chuỗi cao nhất</div>
+          <div class="text-2xl font-black text-pink-400" id="finalMaxStreak">0 🔥</div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+        <button onclick="restartQuiz()" class="btn-quiz flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm md:text-base shadow-lg">
+          CHƠI LẠI 🔁
+        </button>
+        <button onclick="reviewMistakes()" id="reviewBtn" class="btn-quiz flex-1 py-3.5 px-6 rounded-2xl bg-purple-900/80 hover:bg-purple-800 border border-purple-600/50 text-white font-extrabold text-sm md:text-base">
+          XEM LẠI ĐÁP ÁN 📑
+        </button>
+      </div>
+
+      <div id="reviewContainer" class="hidden mt-8 w-full text-left max-h-96 overflow-y-auto space-y-3 pr-2"></div>
+    </div>
+
+  </main>
+
+  <script>
+    const SoundFX = {
+      ctx: null,
+      enabled: true,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      },
+      playClick() {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          const t = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(650, t);
+          osc.frequency.exponentialRampToValueAtTime(280, t + 0.05);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.05);
+        } catch(e) {}
+      },
+      playCorrect(streakLevel = 0) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          const t = this.ctx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const noteTime = t + idx * 0.06;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, noteTime);
+            gain.gain.setValueAtTime(0, noteTime);
+            gain.gain.linearRampToValueAtTime(0.25, noteTime + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(noteTime);
+            osc.stop(noteTime + 0.35);
+          });
+        } catch(e) {}
+      },
+      playWrong() {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          const t = this.ctx.currentTime;
+          const osc1 = this.ctx.createOscillator();
+          const gainDissonant = this.ctx.createGain();
+          osc1.type = 'sawtooth';
+          osc1.frequency.setValueAtTime(260, t);
+          osc1.frequency.exponentialRampToValueAtTime(120, t + 0.32);
+          gainDissonant.gain.setValueAtTime(0.28, t);
+          gainDissonant.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+          osc1.connect(gainDissonant);
+          gainDissonant.connect(this.ctx.destination);
+          osc1.start(t);
+          osc1.stop(t + 0.35);
+        } catch(e) {}
+      },
+      playComplete() {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          const t = this.ctx.currentTime;
+          const notes = [261.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, t + i*0.1);
+            gain.gain.setValueAtTime(0.2, t + i*0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + i*0.1 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t + i*0.1);
+            osc.stop(t + i*0.1 + 0.3);
+          });
+        } catch(e) {}
+      }
+    };
+
+    function toggleSound() {
+      SoundFX.enabled = !SoundFX.enabled;
+      document.getElementById('soundIcon').innerText = SoundFX.enabled ? '🔊' : '🔇';
+      if (SoundFX.enabled) SoundFX.playClick();
+    }
+
+    const SVG_LIB = {
+      dna: `<svg viewBox="0 0 300 80" class="w-full"><path d="M 40 40 Q 90 10 150 40 T 260 40" fill="none" stroke="#38bdf8" stroke-width="4"/><path d="M 40 40 Q 90 70 150 40 T 260 40" fill="none" stroke="#f472b6" stroke-width="4"/><text x="150" y="25" fill="#e2e8f0" font-size="11" font-weight="bold" text-anchor="middle">DNA Xoắn kép</text></svg>`,
+      dogma: `<svg viewBox="0 0 300 80" class="w-full"><rect x="30" y="25" width="60" height="30" rx="5" fill="#4f46e5"/><text x="60" y="44" fill="#fff" font-size="11" font-weight="bold" text-anchor="middle">DNA</text><path d="M 95 40 L 125 40" stroke="#a855f7" stroke-width="2"/><text x="110" y="25" fill="#f472b6" font-size="9" text-anchor="middle">Phiên mã</text><rect x="130" y="25" width="60" height="30" rx="5" fill="#ec4899"/><text x="160" y="44" fill="#fff" font-size="11" font-weight="bold" text-anchor="middle">mRNA</text><path d="M 195 40 L 225 40" stroke="#a855f7" stroke-width="2"/><text x="210" y="25" fill="#34d399" font-size="9" text-anchor="middle">Dịch mã</text><rect x="230" y="25" width="60" height="30" rx="5" fill="#10b981"/><text x="260" y="44" fill="#fff" font-size="11" font-weight="bold" text-anchor="middle">Protein</text></svg>`,
+      nucleotide: `<svg viewBox="0 0 300 80" class="w-full"><circle cx="60" cy="40" r="15" fill="#facc15"/><text x="60" y="44" fill="#000" font-size="10" font-weight="bold" text-anchor="middle">P</text><line x1="75" y1="40" x2="120" y2="40" stroke="#94a3b8" stroke-width="2"/><polygon points="135,25 155,40 145,55 125,55" fill="#38bdf8"/><text x="137" y="44" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">Đường</text><line x1="155" y1="40" x2="200" y2="40" stroke="#94a3b8" stroke-width="2"/><rect x="200" y="25" width="60" height="30" rx="5" fill="#f97316"/><text x="230" y="44" fill="#fff" font-size="10" font-weight="bold" text-anchor="middle">Base</text></svg>`,
+      rna_single: `<svg viewBox="0 0 300 80" class="w-full"><path d="M 40 40 Q 90 20 150 40 T 260 40" fill="none" stroke="#34d399" stroke-width="4"/><text x="150" y="22" fill="#e2e8f0" font-size="11" font-weight="bold" text-anchor="middle">RNA Mạch đơn</text></svg>`,
+      plasmid_img: `<svg viewBox="0 0 300 80" class="w-full"><circle cx="150" cy="40" r="25" fill="none" stroke="#f43f5e" stroke-width="4"/><text x="150" y="44" fill="#e2e8f0" font-size="10" font-weight="bold" text-anchor="middle">Plasmid</text></svg>`
+    };
+
+    // BỘ 20 CÂU HỎI (Gồm trắc nghiệm đơn, đúng/sai, lựa chọn hình ảnh - 18 Nhận biết, 2 Thông hiểu)
+    const QUESTION_BANK = [
+      {
+        id: 1, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Axit nucleic bao gồm hai loại chính nào sau đây?",
+        options: [
+          { text: "DNA và RNA", isCorrect: true },
+          { text: "Protein và Lipid", isCorrect: false },
+          { text: "Glucose và Cellulose", isCorrect: false },
+          { text: "Adenine và Thymine", isCorrect: false }
+        ],
+        explanation: "SGK Sinh học 10: Axit nucleic gồm hai loại chính là DNA và RNA."
+      },
+      {
+        id: 2, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Chức năng cốt lõi của phân tử DNA trong tế bào là gì?",
+        options: [
+          { text: "Lưu trữ, bảo quản và truyền đạt thông tin di truyền", isCorrect: true },
+          { text: "Xúc tác trực tiếp cho mọi phản ứng hóa học", isCorrect: false },
+          { text: "Cung cấp năng lượng chủ yếu cho tế bào hoạt động", isCorrect: false },
+          { text: "Trực tiếp vận chuyển các chất qua màng sinh chất", isCorrect: false }
+        ],
+        explanation: "DNA đảm nhận vai trò lưu trữ, bảo quản và truyền đạt thông tin di truyền."
+      },
+      {
+        id: 3, level: "Nhận biết", type: "true_false", svg: SVG_LIB.nucleotide,
+        question: "Đúng hay Sai: Mỗi đơn phân nucleotide cấu tạo nên DNA gồm gốc phosphate, đường deoxyribose (5C) và bazơ nitơ (A, T, G, C)?",
+        options: [
+          { text: "Đúng", isCorrect: true },
+          { text: "Sai", isCorrect: false }
+        ],
+        explanation: "Phát biểu chính xác. Đơn phân của DNA gồm 3 thành phần: gốc phosphate, đường deoxyribose và bazơ nitơ (A, T, G, C)."
+      },
+      {
+        id: 4, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Trong cấu trúc của phân tử DNA, các loại bazơ nitơ nào sau đây liên kết bổ sung với nhau?",
+        options: [
+          { text: "A liên kết với T; G liên kết với C", isCorrect: true },
+          { text: "A liên kết với U; G liên kết với C", isCorrect: false },
+          { text: "A liên kết với G; T liên kết với C", isCorrect: false },
+          { text: "A liên kết với C; T liên kết với G", isCorrect: false },
+        ],
+        explanation: "Nguyên tắc bổ sung trong DNA: A luôn bắt cặp với T, G luôn bắt cặp với C[cite: 1]."
+      },
+      {
+        id: 5, level: "Nhận biết", type: "image_choice", svg: null,
+        question: "Dựa vào sơ đồ dòng thông tin di truyền (Dogma trung tâm), hình ảnh minh họa nào dưới đây thể hiện đúng quy trình truyền thông tin?",
+        options: [
+          { text: "DNA -> mRNA -> Protein", isCorrect: true, svgContent: SVG_LIB.dogma },
+          { text: "Protein -> DNA -> mRNA", isCorrect: false, svgContent: SVG_LIB.rna_single },
+          { text: "mRNA -> Protein -> DNA", isCorrect: false, svgContent: SVG_LIB.nucleotide },
+          { text: "DNA -> Protein -> mRNA", isCorrect: false, svgContent: SVG_LIB.plasmid_img }
+        ],
+        explanation: "Dòng thông tin di truyền theo Dogma trung tâm: DNA được phiên mã thành mRNA, sau đó mRNA được dịch mã thành Protein[cite: 1]."
+      },
+      {
+        id: 6, level: "Nhận biết", type: "true_false", svg: SVG_LIB.rna_single,
+        question: "Đúng hay Sai: Phân tử RNA có chứa bazơ nitơ Uracil (U) thay cho Thymine (T) có ở DNA?",
+        options: [
+          { text: "Đúng", isCorrect: true },
+          { text: "Sai", isCorrect: false }
+        ],
+        explanation: "Đúng, RNA chứa Uracil (U) thay vì Thymine (T) như trong cấu trúc của DNA[cite: 1]."
+      },
+      {
+        id: 7, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Loại đường cấu tạo nên đơn phân nucleotide của RNA là gì?",
+        options: [
+          { text: "Đường ribose (5 carbon)", isCorrect: true },
+          { text: "Đường deoxyribose (5 carbon)", isCorrect: false },
+          { text: "Đường glucose (6 carbon)", isCorrect: false },
+          { text: "Đường fructose (6 carbon)", isCorrect: false }
+        ],
+        explanation: "RNA cấu tạo từ đường ribose, trong khi DNA cấu tạo từ đường deoxyribose[cite: 1]."
+      },
+      {
+        id: 8, level: "Nhận biết", type: "single", svg: SVG_LIB.dogma,
+        question: "Loại RNA nào sau đây làm nhiệm vụ vận chuyển amino acid tới ribosome trong quá trình dịch mã?",
+        options: [
+          { text: "tRNA", isCorrect: true },
+          { text: "mRNA", isCorrect: false },
+          { text: "rRNA", isCorrect: false },
+          { text: "Ribozyme", isCorrect: false }
+        ],
+        explanation: "tRNA (RNA vận chuyển) đưa amino acid đến ribosome và có bộ ba đối mã nhận biết codon trên mRNA[cite: 1]."
+      },
+      {
+        id: 9, level: "Nhận biết", type: "single", svg: SVG_LIB.dogma,
+        question: "Phân tử RNA nào tham gia cấu tạo nên ribosome - cơ quan tổng hợp protein của tế bào?",
+        options: [
+          { text: "rRNA", isCorrect: true },
+          { text: "tRNA", isCorrect: false },
+          { text: "mRNA", isCorrect: false },
+          { text: "Plasmid", isCorrect: false }
+        ],
+        explanation: "rRNA (RNA ribosome) tham gia cấu tạo ribosome và xúc tác hình thành liên kết peptide[cite: 1]."
+      },
+      {
+        id: 10, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Cặp bazơ nitơ nào sau đây liên kết với nhau bằng 3 liên kết hydrogen trong phân tử DNA?",
+        options: [
+          { text: "G và C", isCorrect: true },
+          { text: "A và T", isCorrect: false },
+          { text: "A và U", isCorrect: false },
+          { text: "A và G", isCorrect: false }
+        ],
+        explanation: "A-T liên kết bằng 2 liên kết hydrogen, còn G-C liên kết bằng 3 liên kết hydrogen[cite: 1]."
+      },
+      {
+        id: 11, level: "Nhận biết", type: "image_choice", svg: null,
+        question: "Hình ảnh cấu trúc dạng vòng nào dưới đây mô tả đúng về Plasmid ở tế bào vi khuẩn?",
+        options: [
+          { text: "Phân tử DNA mạch vòng kép nhỏ", isCorrect: true, svgContent: SVG_LIB.plasmid_img },
+          { text: "Phân tử đường đơn hình lục giác", isCorrect: false, svgContent: SVG_LIB.nucleotide },
+          { text: "Chuỗi xoắn kép mở hai đầu", isCorrect: false, svgContent: SVG_LIB.dna },
+          { text: "Mạch thẳng đơn", isCorrect: false, svgContent: SVG_LIB.rna_single }
+        ],
+        explanation: "Plasmid là phân tử DNA mạch vòng, dạng kép có kích thước nhỏ nằm ngoài nhân tế bào vi khuẩn[cite: 1]."
+      },
+      {
+        id: 12, level: "Nhận biết", type: "true_false", svg: SVG_LIB.dna,
+        question: "Đúng hay Sai: Hiện tượng tích tụ quá nhiều uric acid do rối loạn chuyển hóa nhân purine trong thức ăn sẽ gây ra bệnh gút (goute)?",
+        options: [
+          { text: "Đúng", isCorrect: true },
+          { text: "Sai", isCorrect: false }
+        ],
+        explanation: "Phát biểu chính xác. Nhân purine trong nucleic acid chuyển hóa thành uric acid, dư thừa sẽ kết tinh ở khớp gây bệnh gút[cite: 1]."
+      },
+      {
+        id: 13, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Những phân tử RNA có khả năng xúc tác cho các phản ứng hóa học tương tự như enzyme được gọi là gì?",
+        options: [
+          { text: "Ribozyme", isCorrect: true },
+          { text: "Anticodon", isCorrect: false },
+          { text: "Plasmid", isCorrect: false },
+          { text: "Codon", isCorrect: false }
+        ],
+        explanation: "Ribozyme là tên gọi của những RNA có chức năng xúc tác phản ứng hóa học[cite: 1]."
+      },
+      {
+        id: 14, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Trong một phân tử DNA mạch kép, hệ thức nào sau đây luôn đúng theo nguyên tắc bổ sung?",
+        options: [
+          { text: "A = T và G = C", isCorrect: true },
+          { text: "A = G và T = C", isCorrect: false },
+          { text: "A = C và G = T", isCorrect: false },
+          { text: "A + T = G + C luôn luôn đúng", isCorrect: false }
+        ],
+        explanation: "Do nguyên tắc bổ sung A liên kết với T và G liên kết với C nên số lượng A=T và G=C[cite: 1]."
+      },
+      {
+        id: 15, level: "Nhận biết", type: "true_false", svg: SVG_LIB.nucleotide,
+        question: "Đúng hay Sai: Liên kết nối giữa các nucleotide kế tiếp nhau trên một mạch polynucleotide là liên kết phosphodiester?",
+        options: [
+          { text: "Đúng", isCorrect: true },
+          { text: "Sai", isCorrect: false }
+        ],
+        explanation: "Chính xác, các nucleotide trên cùng một mạch liên kết với nhau bằng liên kết phosphodiester[cite: 1]."
+      },
+      {
+        id: 16, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Mô hình cấu trúc không gian xoắn kép của DNA được công bố chính thức vào năm nào và bởi ai?",
+        options: [
+          { text: "Năm 1953 do Watson và Crick công bố", isCorrect: true },
+          { text: "Năm 1865 do Gregor Mendel công bố", isCorrect: false },
+          { text: "Năm 1900 do Hugo de Vries công bố", isCorrect: false },
+          { text: "Năm 1925 do Thomas Morgan công bố", isCorrect: false }
+        ],
+        explanation: "Cấu trúc xoắn kép DNA được Watson và Crick công bố năm 1953[cite: 1]."
+      },
+      {
+        id: 17, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Dấu vân tay DNA (DNA fingerprinting) ứng dụng chủ yếu trong lĩnh vực nào sau đây?",
+        options: [
+          { text: "Nhận dạng cá thể, điều tra tội phạm và xác định quan hệ huyết thống", isCorrect: true },
+          { text: "Đo lường hàm lượng đường huyết trong máu", isCorrect: false },
+          { text: "Sản xuất thuốc kháng sinh điều trị vi khuẩn", isCorrect: false },
+          { text: "Đo tốc độ quang hợp ở thực vật", isCorrect: false }
+        ],
+        explanation: "Dấu vân tay DNA dựa trên các vùng lặp lại khác nhau giữa các cá thể để nhận dạng và xác định nhân thân[cite: 1]."
+      },
+      {
+        id: 18, level: "Nhận biết", type: "single", svg: SVG_LIB.dna,
+        question: "Tại sao trong thí nghiệm tách chiết DNA, các mô động vật như gan gà hoặc gan lợn thường được ưu tiên sử dụng làm nguyên liệu?",
+        options: [
+          { text: "Vì tế bào gan có mật độ tế bào cao và chứa rất nhiều DNA, dễ tách chiết", isCorrect: true },
+          { text: "Vì tế bào gan không có chứa bất kỳ loại protein nào", isCorrect: false },
+          { text: "Vì DNA trong gan tồn tại hoàn toàn ở dạng tự do ngoài tế bào", isCorrect: false },
+          { text: "Vì gan không có màng tế bào bao bọc", isCorrect: false }
+        ],
+        explanation: "Mô gan động vật chứa hàm lượng tế bào và DNA phong phú, thuận lợi cho việc thực hành tách chiết[cite: 1]."
+      },
+      {
+        id: 19, level: "Thông hiểu", type: "single", svg: SVG_LIB.dna,
+        question: "Vì sao hai mạch polynucleotide của DNA lại luôn phải cấu trúc chạy ngược chiều nhau (một mạch 5'->3' và mạch kia 3'->5')?",
+        options: [
+          { text: "Giúp các bazơ nitơ ở hai mạch tiếp xúc và bắt cặp bổ sung chính xác với nhau theo không gian hình học", isCorrect: true },
+          { text: "Làm cho phân tử DNA dễ dàng tan hoàn toàn trong nước của tế bào chất", isCorrect: false },
+          { text: "Giúp enzyme DNA polymerase dễ dàng gắn kết với mọi loại protein lạ", isCorrect: false },
+          { text: "Ngăn cản tuyệt đối không cho phân tử DNA tự tái bản trước khi phân bào", isCorrect: false }
+        ],
+        explanation: "Hai mạch chạy ngược chiều tạo điều kiện không gian thích hợp để các cặp bazơ nitơ hướng vào trong và hình thành liên kết hydrogen ổn định[cite: 1]."
+      },
+      {
+        id: 20, level: "Thông hiểu", type: "single", svg: SVG_LIB.dna,
+        question: "Ý nghĩa sinh học quan trọng nhất của các liên kết hydrogen tương đối yếu nhưng có số lượng cực lớn giữa hai mạch DNA là gì?",
+        options: [
+          { text: "Giúp phân tử DNA vừa bền vững để bảo quản thông tin vừa dễ dàng tách rời hai mạch khi tái bản hoặc phiên mã", isCorrect: true },
+          { text: "Giúp DNA có thể biến đổi trình tự nucleotide tự do liên tục theo môi trường", isCorrect: false },
+          { text: "Làm cho phân tử DNA có khả năng tự phát ra ánh sáng sinh học trong nhân", isCorrect: false },
+          { text: "Giúp DNA dễ dàng chuyển đổi cấu trúc thành phân tử RNA khi cần thiết", isCorrect: false },
+        ],
+        explanation: "Liên kết hydrogen tuy yếu nhưng số lượng rất lớn tạo độ bền vững, đồng thời cho phép hai mạch dễ dàng tách nhau ra (như mở khóa kéo) khi nhân đôi hoặc phiên mã[cite: 1]."
+      }
+    ];
+
+    let questions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let maxStreak = 0;
+    let correctCount = 0;
+    let isShuffle = true;
+    let isAnsweringBlocked = false;
+    let autoNextTimeout = null;
+    let userAnswersHistory = [];
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function toggleShuffle() {
+      SoundFX.playClick();
+      isShuffle = !isShuffle;
+      document.getElementById('shuffleStatus').innerText = isShuffle ? 'Xáo trộn: BẬT' : 'Xáo trộn: TẮT';
+    }
+
+    function startQuiz() {
+      SoundFX.playClick();
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('quizScreen').classList.remove('hidden');
+      document.getElementById('quizScreen').classList.add('flex');
+
+      questions = isShuffle ? shuffleArray(QUESTION_BANK) : JSON.parse(JSON.stringify(QUESTION_BANK));
+      if (isShuffle) {
+        questions.forEach(q => { 
+          if (q.type !== 'true_false') {
+            q.options = shuffleArray(q.options); 
+          }
+        });
+      }
+
+      currentIndex = 0;
+      score = 0;
+      streak = 0;
+      maxStreak = 0;
+      correctCount = 0;
+      userAnswersHistory = [];
+      updateScoreBadge();
+      loadQuestion(currentIndex);
+    }
+
+    function updateScoreBadge() {
+      document.getElementById('scoreBadge').innerText = score;
+      document.getElementById('streakIndicator').innerText = `Chuỗi: ${streak} 🔥`;
+    }
+
+    function loadQuestion(index) {
+      if (index >= questions.length) {
+        finishQuiz();
+        return;
+      }
+
+      isAnsweringBlocked = false;
+      clearTimeout(autoNextTimeout);
+      document.getElementById('autoNextTimer').innerText = '--';
+
+      const q = questions[index];
+      const progressPercent = (index / questions.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+      document.getElementById('questionCounter').innerText = `Câu ${index + 1}/${questions.length}`;
+
+      const levelTag = document.getElementById('levelTag');
+      if (q.level === 'Thông hiểu') {
+        levelTag.innerText = 'Thông hiểu';
+        levelTag.className = 'px-2.5 py-1 rounded-md text-xs uppercase tracking-wider bg-amber-500/30 text-amber-300 font-extrabold border border-amber-500/50';
+      } else {
+        levelTag.innerText = 'Nhận biết';
+        levelTag.className = 'px-2.5 py-1 rounded-md text-xs uppercase tracking-wider bg-purple-700 text-purple-100 font-extrabold';
+      }
+
+      const illBox = document.getElementById('illustrationBox');
+      if (q.svg && q.type !== 'image_choice') {
+        illBox.innerHTML = q.svg;
+        illBox.classList.remove('hidden');
+      } else {
+        illBox.innerHTML = '';
+        illBox.classList.add('hidden');
+      }
+
+      document.getElementById('questionTitle').innerText = q.question;
+      document.getElementById('feedbackBanner').classList.add('hidden');
+
+      const container = document.getElementById('answerOptionsContainer');
+      container.innerHTML = '';
+
+      if (q.type === 'true_false') {
+        // Render 2 nút Đúng / Sai lớn
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-4 max-w-md mx-auto w-full';
+
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          const isTrueOpt = opt.text === 'Đúng';
+          btn.className = `btn-quiz py-6 px-4 rounded-2xl border-2 font-black text-lg text-white flex flex-col items-center justify-center gap-2 shadow-lg ${isTrueOpt ? 'bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400' : 'bg-rose-600/90 hover:bg-rose-500 border-rose-400'}`;
+          btn.id = `opt-btn-${idx}`;
+          btn.innerHTML = `
+            <span class="text-3xl">${isTrueOpt ? '✔' : '✖'}</span>
+            <span>${opt.text}</span>
+            <span class="icon-indicator text-sm"></span>
+          `;
+          btn.onclick = () => handleSelectOption(idx, q);
+          grid.appendChild(btn);
+        });
+        container.appendChild(grid);
+
+      } else if (q.type === 'image_choice') {
+        // Render dạng lựa chọn hình ảnh (các đáp án có chứa SVG minh họa)
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3';
+
+        const colorPalettes = [
+          'bg-indigo-600/90 hover:bg-indigo-500 border-indigo-500',
+          'bg-pink-600/90 hover:bg-pink-500 border-pink-500',
+          'bg-amber-600/90 hover:bg-amber-500 border-amber-500',
+          'bg-teal-600/90 hover:bg-teal-500 border-teal-500'
+        ];
+
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `btn-quiz text-left p-3 rounded-2xl border-2 font-bold text-sm text-white flex flex-col gap-2 shadow-md ${colorPalettes[idx % 4]}`;
+          btn.id = `opt-btn-${idx}`;
+          btn.innerHTML = `
+            <div class="flex items-center justify-between w-full">
+              <span class="w-6 h-6 rounded-lg bg-black/25 flex items-center justify-center font-black text-xs shrink-0">${String.fromCharCode(65 + idx)}</span>
+              <span class="icon-indicator text-base"></span>
+            </div>
+            <div class="bg-black/20 p-2 rounded-xl border border-white/10 w-full flex items-center justify-center svg-container">
+              ${opt.svgContent || ''}
+            </div>
+            <span class="text-center w-full font-semibold">${opt.text}</span>
+          `;
+          btn.onclick = () => handleSelectOption(idx, q);
+          grid.appendChild(btn);
+        });
+        container.appendChild(grid);
+
+      } else {
+        // Dạng trắc nghiệm thông thường (single)
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
+
+        const colorPalettes = [
+          'bg-indigo-600/90 hover:bg-indigo-500 border-indigo-500',
+          'bg-pink-600/90 hover:bg-pink-500 border-pink-500',
+          'bg-amber-600/90 hover:bg-amber-500 border-amber-500',
+          'bg-teal-600/90 hover:bg-teal-500 border-teal-500'
+        ];
+
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `btn-quiz text-left p-3.5 rounded-2xl border-2 font-bold text-sm md:text-base text-white flex items-center justify-between shadow-md ${colorPalettes[idx % 4]}`;
+          btn.id = `opt-btn-${idx}`;
+          btn.innerHTML = `
+            <div class="flex items-center gap-3 pr-2">
+              <span class="w-7 h-7 rounded-lg bg-black/25 flex items-center justify-center font-black text-xs shrink-0">${String.fromCharCode(65 + idx)}</span>
+              <span>${opt.text}</span>
+            </div>
+            <span class="icon-indicator text-lg shrink-0"></span>
+          `;
+          btn.onclick = () => handleSelectOption(idx, q);
+          grid.appendChild(btn);
+        });
+
+        container.appendChild(grid);
+      }
+    }
+
+    function handleSelectOption(selectedIdx, question) {
+      if (isAnsweringBlocked) return;
+      isAnsweringBlocked = true;
+
+      const selectedOpt = question.options[selectedIdx];
+      const isCorrect = selectedOpt.isCorrect;
+      const correctIdx = question.options.findIndex(o => o.isCorrect);
+
+      question.options.forEach((_, idx) => {
+        const btn = document.getElementById(`opt-btn-${idx}`);
+        if (btn) btn.disabled = true;
+      });
+
+      const selectedBtn = document.getElementById(`opt-btn-${selectedIdx}`);
+      const correctBtn = document.getElementById(`opt-btn-${correctIdx}`);
+
+      if (isCorrect) {
+        selectedBtn.classList.remove('bg-indigo-600/90', 'bg-pink-600/90', 'bg-amber-600/90', 'bg-teal-600/90', 'bg-emerald-600/90', 'bg-rose-600/90');
+        selectedBtn.classList.add('glow-correct');
+        const indicator = selectedBtn.querySelector('.icon-indicator');
+        if (indicator) indicator.innerText = '✔';
+        streak++;
+        if (streak > maxStreak) maxStreak = streak;
+        score += 100 + (streak > 1 ? streak * 15 : 0);
+        correctCount++;
+        SoundFX.playCorrect(streak);
+      } else {
+        selectedBtn.classList.remove('bg-indigo-600/90', 'bg-pink-600/90', 'bg-amber-600/90', 'bg-teal-600/90', 'bg-emerald-600/90', 'bg-rose-600/90');
+        selectedBtn.classList.add('glow-wrong');
+        const indicator = selectedBtn.querySelector('.icon-indicator');
+        if (indicator) indicator.innerText = '✖';
+
+        if (correctBtn) {
+          correctBtn.classList.remove('bg-indigo-600/90', 'bg-pink-600/90', 'bg-amber-600/90', 'bg-teal-600/90', 'bg-emerald-600/90', 'bg-rose-600/90');
+          correctBtn.classList.add('glow-correct');
+          const correctIndicator = correctBtn.querySelector('.icon-indicator');
+          if (correctIndicator) correctIndicator.innerText = '✔ ĐÚNG';
+        }
+        streak = 0;
+        SoundFX.playWrong();
+      }
+
+      updateScoreBadge();
+      showFeedback(isCorrect, question.explanation);
+
+      userAnswersHistory.push({
+        question: question.question,
+        userChoice: selectedOpt.text,
+        correctChoice: question.options[correctIdx].text,
+        isCorrect: isCorrect,
+        explanation: question.explanation
+      });
+
+      startAutoNextCountdown(2.5);
+    }
+
+    function showFeedback(isCorrect, explanation) {
+      const banner = document.getElementById('feedbackBanner');
+      const icon = document.getElementById('feedbackIcon');
+      const title = document.getElementById('feedbackTitle');
+      const text = document.getElementById('feedbackText');
+
+      banner.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-600', 'text-emerald-100', 'bg-red-950/80', 'border-red-600', 'text-red-100');
+
+      if (isCorrect) {
+        banner.classList.add('bg-emerald-950/80', 'border-emerald-600', 'text-emerald-100');
+        icon.innerText = '🎉';
+        title.innerText = 'CHÍNH XÁC!';
+      } else {
+        banner.classList.add('bg-red-950/80', 'border-red-600', 'text-red-100');
+        icon.innerText = '💡';
+        title.innerText = 'CHƯA CHÍNH XÁC - GIẢI THÍCH:';
+      }
+      text.innerText = explanation;
+    }
+
+    function startAutoNextCountdown(seconds) {
+      let remaining = seconds;
+      document.getElementById('autoNextTimer').innerText = `${remaining.toFixed(1)}s`;
+
+      const interval = setInterval(() => {
+        remaining -= 0.1;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          document.getElementById('autoNextTimer').innerText = 'Chuyển...';
+          currentIndex++;
+          loadQuestion(currentIndex);
+        } else {
+          document.getElementById('autoNextTimer').innerText = `${remaining.toFixed(1)}s`;
+        }
+      }, 100);
+
+      autoNextTimeout = interval;
+    }
+
+    function finishQuiz() {
+      document.getElementById('quizScreen').classList.remove('flex');
+      document.getElementById('quizScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.remove('hidden');
+      document.getElementById('resultScreen').classList.add('flex');
+
+      const accuracy = Math.round((correctCount / questions.length) * 100);
+      document.getElementById('finalScore').innerText = score;
+      document.getElementById('finalAccuracy').innerText = `${accuracy}%`;
+      document.getElementById('finalCorrectCount').innerText = `${correctCount}/${questions.length}`;
+      document.getElementById('finalMaxStreak').innerText = `${maxStreak} 🔥`;
+
+      if (accuracy >= 80) {
+        SoundFX.playComplete();
+        document.getElementById('resultTitle').innerText = 'XUẤT SẮC ĐẠT ĐIỂM CAO!';
+        document.getElementById('resultSubtitle').innerText = 'Bạn đã nắm vững hoàn toàn nội dung bài học!';
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 130, spread: 85, origin: { y: 0.6 } });
+        }
+      } else {
+        document.getElementById('resultTitle').innerText = 'HOÀN THÀNH BÀI THI!';
+        document.getElementById('resultSubtitle').innerText = 'Xem lại chi tiết đáp án để củng cố thêm kiến thức nhé.';
+      }
+
+      buildReviewList();
+    }
+
+    function buildReviewList() {
+      const container = document.getElementById('reviewContainer');
+      container.innerHTML = '<h3 class="font-black text-purple-200 mb-3 text-base">Chi tiết đáp án từng câu hỏi:</h3>';
+
+      userAnswersHistory.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = `p-3.5 rounded-xl border text-xs md:text-sm ${item.isCorrect ? 'bg-emerald-950/40 border-emerald-800/60' : 'bg-red-950/40 border-red-800/60'}`;
+        div.innerHTML = `
+          <div class="font-bold text-white mb-1">Câu ${idx + 1}: ${item.question}</div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="${item.isCorrect ? 'text-emerald-400' : 'text-red-400'} font-black">
+              ${item.isCorrect ? '✔ Đúng' : '✖ Chưa đúng'}
+            </span>
+            <span class="text-gray-300">• Đáp án chuẩn: <strong class="text-teal-300">${item.correctChoice}</strong></span>
+          </div>
+          <div class="text-purple-300 text-xs mt-1 bg-black/30 p-2 rounded-lg">💡 ${item.explanation}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function reviewMistakes() {
+      SoundFX.playClick();
+      const container = document.getElementById('reviewContainer');
+      const btn = document.getElementById('reviewBtn');
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        btn.innerText = 'ẨN ĐÁP ÁN 📑';
+      } else {
+        container.classList.add('hidden');
+        btn.innerText = 'XEM LẠI ĐÁP ÁN 📑';
+      }
+    }
+
+    function restartQuiz() {
+      SoundFX.playClick();
+      startQuiz();
+    }
+  </script>
+</body>
+</html>
